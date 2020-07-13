@@ -860,7 +860,6 @@ namespace XF.Material.Forms.UI
         private void ChangeToNormalState()
         {
             const double opactiy = 1;
-            IsEnabled = true;
             entry.Opacity = opactiy;
             placeholder.Opacity = opactiy;
             helper.Opacity = opactiy;

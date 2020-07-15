@@ -8,6 +8,7 @@
     <ContentPage.Content>
         <StackLayout Orientation="Vertical"
                      Padding="20">
+            <material:MaterialTextField Placeholder="Validation" Text="{Binding Name, Mode=TwoWay}" HasError="{Binding HasError}" ErrorText="{Binding ErrorMessage}" />
             <material:MaterialTextField Placeholder="Auto Capitalization"
                                         IsAutoCapitalizationEnabled="True" />
 

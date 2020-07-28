@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -994,41 +995,49 @@ namespace XF.Material.Forms.UI
 
         private IList<string> GetChoices(out IList<string> choicesResults)
         {
+            PropertyInfo choiceProperty = null;
+            PropertyInfo choiceResultProperty = null;
             var choiceStrings = new List<string>(Choices.Count);
             choicesResults = new List<string>(Choices.Count);
             var listType = Choices[0].GetType();
+            var bindingMatch = ChoicesBindingName == ChoicesResultBindingName;
+
+
+            if (!string.IsNullOrEmpty(ChoicesBindingName))
+            {
+                choiceProperty = listType.GetProperty(ChoicesBindingName);
+            }
+            if (!bindingMatch && !string.IsNullOrEmpty(ChoicesResultBindingName))
+            {
+                choiceResultProperty = listType.GetProperty(ChoicesResultBindingName);
+            }
+
             foreach (var item in Choices)
             {
-                string choice = item.ToString();
-                if (!string.IsNullOrEmpty(ChoicesBindingName))
-                {
-                    var propInfo = listType.GetProperty(ChoicesBindingName);
-
-                    if (propInfo != null)
-                    { 
-                        var propValue = propInfo.GetValue(item);
-                        choice =propValue.ToString();
-                    }
-                }
-
+                var choice = choiceProperty != null ? GetChoiceValue(choiceProperty.GetValue(item)) : item.ToString();
                 choiceStrings.Add(choice);
 
-                string choiceResult = choice;
-                if (!string.IsNullOrEmpty(ChoicesResultBindingName))
+                if (bindingMatch)
                 {
-                    var propInfo = listType.GetProperty(ChoicesResultBindingName);
-
-                    if (propInfo != null)
-                    {
-                        var propValue = propInfo.GetValue(item);
-                        choiceResult = propValue.ToString();
-                    }
+                    choicesResults.Add(choice);
                 }
-
-                choicesResults.Add(choiceResult);
+                else
+                {
+                    var choiceResult = choiceResultProperty != null ? GetChoiceValue(choiceResultProperty.GetValue(item)) : item.ToString();
+                    choicesResults.Add(choiceResult);
+                }
             }
 
             return choiceStrings;
+        }
+
+        private static string GetChoiceValue(object item)
+        {
+            if (item is string str)
+            {
+                return str;
+            }
+            return item?.ToString() ?? string.Empty;
         }
 
         private object GetSelectedChoice(int index)
@@ -1266,7 +1275,11 @@ namespace XF.Material.Forms.UI
             {
                 throw new InvalidOperationException("The property `Choices` is null or empty");
             }
-            _choices = GetChoices(out _choicesResults);
+
+            if (_choices == null || _choicesResults == null)
+            {
+                _choices = GetChoices(out _choicesResults);
+            }
 
             var title = MaterialConfirmationDialog.GetDialogTitle(this);
             var confirmingText = MaterialConfirmationDialog.GetDialogConfirmingText(this);
